@@ -187,8 +187,20 @@ io.on("connection", (socket) => {
       updateRoomUsers(user.room);
 
       // Send message history to new user
-      const messageHistory = await db.getMessageHistory(user.room, 50);
-      socket.emit("messageHistory", messageHistory);
+      try {
+        const messageHistory = await db.getMessageHistory(user.room, 50);
+        console.log(`[${socket.id}] Retrieved ${messageHistory.length} messages for room ${user.room}`);
+        socket.emit("messageHistory", messageHistory);
+        
+        if (messageHistory.length > 0) {
+          console.log(`[${socket.id}] Sample message from history:`, messageHistory[0]);
+        } else {
+          console.log(`[${socket.id}] No message history found for room ${user.room}`);
+        }
+      } catch (historyError) {
+        console.error(`[${socket.id}] Error retrieving message history:`, historyError);
+        socket.emit("messageHistory", []); // Send empty array as fallback
+      }
 
       console.log(`[${socket.id}] User join process completed successfully`);
     } catch (error) {
@@ -458,6 +470,37 @@ io.on("connection", (socket) => {
     if (callback) callback(timestamp);
   });
 
+  // Handle manual history request for debugging
+  socket.on("requestHistory", async (data, callback) => {
+    console.log(`[${socket.id}] Manual history request for room:`, data?.room);
+    
+    try {
+      const user = activeUsers.get(socket.id);
+      if (!user) {
+        console.log(`[${socket.id}] No user found for history request`);
+        if (callback) callback({ success: false, error: "User not found" });
+        return;
+      }
+
+      const roomName = data?.room || user.room;
+      const messageHistory = await db.getMessageHistory(roomName, 50);
+      console.log(`[${socket.id}] Manual history request: ${messageHistory.length} messages found for room ${roomName}`);
+      
+      socket.emit("messageHistory", messageHistory);
+      
+      if (callback) {
+        callback({ 
+          success: true, 
+          messageCount: messageHistory.length,
+          room: roomName 
+        });
+      }
+    } catch (error) {
+      console.error(`[${socket.id}] Error in manual history request:`, error);
+      if (callback) callback({ success: false, error: error.message });
+    }
+  });
+
   // Helper function to switch rooms
   async function switchRoom(socket, newRoom, password = null) {
     try {
@@ -508,8 +551,20 @@ io.on("connection", (socket) => {
       updateRoomUsers(newRoom);
 
       // Send room history
-      const roomHistory = await db.getMessageHistory(newRoom, 50);
-      socket.emit("messageHistory", roomHistory);
+      try {
+        const roomHistory = await db.getMessageHistory(newRoom, 50);
+        console.log(`[${socket.id}] Retrieved ${roomHistory.length} messages for room switch to ${newRoom}`);
+        socket.emit("messageHistory", roomHistory);
+        
+        if (roomHistory.length > 0) {
+          console.log(`[${socket.id}] Sample message from room history:`, roomHistory[0]);
+        } else {
+          console.log(`[${socket.id}] No message history found for room ${newRoom}`);
+        }
+      } catch (historyError) {
+        console.error(`[${socket.id}] Error retrieving room history:`, historyError);
+        socket.emit("messageHistory", []); // Send empty array as fallback
+      }
 
       // Notify about room change
       socket.emit("roomChanged", newRoom);

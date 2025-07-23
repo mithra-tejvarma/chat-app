@@ -393,19 +393,36 @@ function setupSocketListeners() {
   });
 
   socket.on("messageHistory", (messages) => {
+    console.log("📜 Received message history:", messages.length, "messages");
+    
+    if (messages.length > 0) {
+      console.log("Sample message from history:", messages[0]);
+    }
+    
     clearMessages();
-    messages.forEach((message) => {
-      // Add encryption indicator to history messages
-      message.encrypted = true;
-      displayMessage(message, false);
+    
+    let successfullyDisplayed = 0;
+    messages.forEach((message, index) => {
+      try {
+        // Add encryption indicator to history messages
+        message.encrypted = true;
+        displayMessage(message, false);
+        successfullyDisplayed++;
+      } catch (error) {
+        console.error(`Error displaying message ${index}:`, error, message);
+      }
     });
+    
     scrollToBottom();
 
     if (messages.length > 0) {
       showNotification(
-        `📜 Loaded ${messages.length} encrypted messages`,
-        "info"
+        `📜 Loaded ${successfullyDisplayed}/${messages.length} encrypted messages`,
+        successfullyDisplayed === messages.length ? "info" : "warning"
       );
+      console.log(`Successfully displayed ${successfullyDisplayed}/${messages.length} messages`);
+    } else {
+      console.log("No message history received");
     }
   });
 
@@ -945,6 +962,50 @@ function sendSimpleMessage() {
 
 // Add to window for testing in console
 window.sendSimpleMessage = sendSimpleMessage;
+
+// Debug function to manually request message history
+function requestMessageHistory() {
+  if (!socket || !socket.connected || !currentRoom) {
+    console.log("Cannot request history: socket not connected or no current room");
+    return;
+  }
+
+  console.log("🔄 Manually requesting message history for room:", currentRoom);
+  
+  // Emit a custom event to request history
+  socket.emit("requestHistory", { room: currentRoom }, (response) => {
+    console.log("History request response:", response);
+  });
+}
+
+// Debug function to check database connection
+function debugDatabaseConnection() {
+  if (!socket || !socket.connected) {
+    console.log("Socket not connected");
+    return;
+  }
+
+  console.log("🔍 Testing database connection...");
+  socket.emit("ping", { timestamp: Date.now() }, (response) => {
+    console.log("Database ping response:", response);
+  });
+}
+
+// Debug function to check current state
+function debugChatState() {
+  console.log("=== CHAT DEBUG STATE ===");
+  console.log("Current User:", currentUser);
+  console.log("Current Room:", currentRoom);
+  console.log("Socket Connected:", socket?.connected);
+  console.log("Socket ID:", socket?.id);
+  console.log("Messages in UI:", document.querySelectorAll('.message').length);
+  console.log("========================");
+}
+
+// Add debug functions to window
+window.requestMessageHistory = requestMessageHistory;
+window.debugDatabaseConnection = debugDatabaseConnection;
+window.debugChatState = debugChatState;
 
 // Handle page visibility for connection management
 document.addEventListener("visibilitychange", function () {
