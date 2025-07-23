@@ -798,6 +798,20 @@ body {
 }
 
 /* Responsive Design */
+
+/* Tablet styles (768px - 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 260px;
+  }
+  
+  .login-container {
+    max-width: 380px;
+    margin: 0 1rem;
+  }
+}
+
+/* Mobile landscape and small tablets (481px - 768px) */
 @media (max-width: 768px) {
   .sidebar {
     width: 240px;
@@ -810,6 +824,15 @@ body {
   .login-container {
     margin: 1rem;
     padding: 2rem;
+    max-width: none;
+  }
+
+  .login-header h1 {
+    font-size: 2rem;
+  }
+
+  .chat-icon {
+    font-size: 2.5rem;
   }
 
   .chat-header {
@@ -819,27 +842,685 @@ body {
   .header-center {
     display: none;
   }
+
+  .header-left h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Adjust message input for tablet */
+  .message-form {
+    gap: 0.75rem;
+  }
+
+  .send-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
-@media (max-width: 640px) {
+/* Mobile portrait (320px - 480px) */
+@media (max-width: 480px) {
+  body {
+    overflow: hidden;
+  }
+
+  /* Login screen mobile adjustments */
+  .login-container {
+    margin: 0.5rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .login-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .login-header p {
+    font-size: 0.9rem;
+  }
+
+  .chat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .input-group input {
+    padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .login-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* Mobile sidebar */
   .sidebar {
     position: fixed;
     left: -280px;
-    top: 70px;
-    height: calc(100vh - 70px);
-    z-index: 100;
+    top: 60px;
+    height: calc(100vh - 60px);
+    z-index: 1000;
     transition: transform 0.3s ease;
+    width: 280px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
 
   .sidebar.open {
     transform: translateX(280px);
   }
 
+  /* Add overlay when sidebar is open */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+
+  .sidebar-overlay.show {
+    display: block;
+  }
+
+  /* Chat container adjustments */
   .chat-container {
     width: 100%;
+    margin-left: 0;
+  }
+
+  .chat-header {
+    padding: 0.75rem 1rem;
+    height: 60px;
+  }
+
+  .header-left h2 {
+    font-size: 1.1rem;
+  }
+
+  .header-left p {
+    font-size: 0.75rem;
+  }
+
+  /* Add hamburger menu button */
+  .mobile-menu-btn {
+    display: block;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    margin-right: 0.75rem;
+  }
+
+  .mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  /* Messages adjustments */
+  .messages-container {
+    padding: 1rem;
+    height: calc(100vh - 60px - 80px); /* Subtract header and input heights */
   }
 
   .message {
     max-width: 95%;
+  }
+
+  .message-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 0.75rem;
+  }
+
+  .message-text {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+    border-radius: 10px;
+  }
+
+  .message-username {
+    font-size: 0.8rem;
+  }
+
+  .message-time {
+    font-size: 0.7rem;
+  }
+
+  /* Message input mobile adjustments */
+  .message-input-container {
+    padding: 1rem;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .message-form {
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  #messageInput {
+    padding: 0.75rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 18px;
+    max-height: 100px;
+    resize: none;
+  }
+
+  .input-wrapper {
+    border-radius: 10px;
+  }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  .emoji-btn {
+    padding: 0.375rem;
+    margin-right: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  /* User list and rooms mobile adjustments */
+  .users-section h3,
+  .rooms-section h3 {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .user-item,
+  .room-item {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .online-count {
+    font-size: 0.75rem;
+  }
+
+  /* Create room mobile adjustments */
+  .create-room-btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .join-room-container {
+    padding: 0.75rem 1rem;
+  }
+
+  .join-room-form {
+    gap: 0.5rem;
+  }
+
+  #joinRoomInput {
+    padding: 0.5rem;
+    font-size: 14px;
+  }
+
+  .join-room-btn {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal-content {
+    margin: 1rem;
+    max-width: none;
+    width: calc(100% - 2rem);
+    max-height: calc(100vh - 2rem);
+    border-radius: 12px;
+  }
+
+  .modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 0.75rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Stats modal mobile adjustments */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  /* Notification adjustments */
+  .notification {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+
+  /* Typing indicator mobile */
+  .typing-indicator {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* Emoji picker mobile */
+  .emoji-picker {
+    width: 280px;
+    height: 200px;
+    bottom: 50px;
+    right: 10px;
+  }
+
+  .emoji-picker .emoji {
+    font-size: 1.2rem;
+    padding: 0.375rem;
+  }
+
+  /* Mobile header improvements */
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-left .fas.fa-comments {
+    font-size: 1.25rem;
+    color: white;
+  }
+
+  .app-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: white;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    margin-right: 0.5rem;
+  }
+
+  .mobile-menu-btn:hover,
+  .mobile-menu-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .header-right {
+    gap: 0.25rem;
+  }
+
+  .header-btn {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile current room display */
+  .current-room {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .online-count {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+}
+
+/* Ensure mobile-only classes work properly */
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .mobile-only {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Extra small mobile devices (max-width: 320px) */
+@media (max-width: 320px) {
+  .login-container {
+    margin: 0.25rem;
+    padding: 1.25rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .sidebar {
+    width: 260px;
+  }
+
+  .message {
+    max-width: 98%;
+  }
+
+  .message-text {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .message-input-container {
+    padding: 0.75rem;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  #messageInput {
+    padding: 0.625rem;
+    font-size: 16px;
+  }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .messages-container {
+    height: calc(100vh - 50px - 70px);
+  }
+
+  .chat-header {
+    height: 50px;
+    padding: 0.5rem 1rem;
+  }
+
+  .header-left h2 {
+    font-size: 1rem;
+  }
+
+  .header-left p {
+    font-size: 0.7rem;
+  }
+
+  .sidebar {
+    top: 50px;
+    height: calc(100vh - 50px);
+  }
+}
+
+/* Hide desktop-only elements on mobile */
+@media (max-width: 480px) {
+  .header-center {
+    display: none !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Show mobile-only elements */
+@media (min-width: 481px) {
+  .mobile-only {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* Mobile-specific improvements */
+
+/* Fix for iOS Safari viewport */
+@supports (-webkit-touch-callout: none) {
+  .chat-app {
+    height: -webkit-fill-available;
+  }
+  
+  .messages-container {
+    height: calc(-webkit-fill-available - 60px - 80px);
+  }
+}
+
+/* Improve touch targets for mobile */
+@media (max-width: 480px) {
+  /* Ensure all interactive elements are at least 44px tall for better touch */
+  .header-btn,
+  .mobile-menu-btn,
+  .send-btn,
+  .emoji-btn,
+  .create-room-btn,
+  .join-room-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improve scrolling performance on mobile */
+  .messages-container,
+  .sidebar,
+  .rooms-list,
+  .users-list {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent text selection on interactive elements */
+  .message-form,
+  .header-btn,
+  .mobile-menu-btn,
+  .send-btn,
+  .sidebar,
+  .room-item,
+  .user-item {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in message input and messages */
+  #messageInput,
+  .message-text,
+  .login-form input {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Fix input zoom on iOS */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    transform-origin: left top;
+    transform: scale(1);
+  }
+
+  /* Better button feedback on touch */
+  .header-btn:active,
+  .mobile-menu-btn:active,
+  .send-btn:active,
+  .create-room-btn:active,
+  .room-item:active,
+  .user-item:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.98);
+  }
+
+  /* Improve modal on mobile */
+  .modal {
+    padding: 0;
+  }
+
+  .modal-content {
+    min-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  /* Mobile-friendly emoji picker */
+  .emoji-picker {
+    position: fixed;
+    bottom: 90px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 250px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Better spacing for mobile form elements */
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    border-radius: 8px;
+    border: 2px solid #e1e5e9;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+}
+
+/* Dark mode support for mobile (optional enhancement) */
+@media (max-width: 480px) and (prefers-color-scheme: dark) {
+  .login-container {
+    background: #1f2937;
+    color: white;
+  }
+
+  .login-header h1 {
+    color: white;
+  }
+
+  .login-header p {
+    color: #d1d5db;
+  }
+
+  .input-group input {
+    background: #374151;
+    border-color: #4b5563;
+    color: white;
+  }
+
+  .input-group input::placeholder {
+    color: #9ca3af;
+  }
+}
+
+/* Landscape mode specific adjustments */
+@media (max-width: 768px) and (orientation: landscape) and (max-height: 500px) {
+  .login-container {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .chat-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-form {
+    gap: 1rem;
+  }
+
+  .input-group input {
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  }
+
+  .messages-container {
+    height: calc(100vh - 50px - 60px);
+  }
+}
+
+/* Prevent zoom on double tap for iOS */
+@media (max-width: 480px) {
+  * {
+    touch-action: manipulation;
+  }
+
+  /* Allow pinch zoom on messages for accessibility */
+  .message-text {
+    touch-action: pinch-zoom;
+  }
+}
+
+/* High DPI displays adjustments */
+@media (max-width: 480px) and (-webkit-min-device-pixel-ratio: 2) {
+  .message-avatar {
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .send-btn,
+  .header-btn {
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
   }
 }

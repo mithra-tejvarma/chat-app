@@ -126,6 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Setup event listeners
   setupEventListeners();
+  setupMobileMenu();
 });
 
 function setupEventListeners() {
@@ -209,6 +210,9 @@ function setupEventListeners() {
       } else {
         switchRoom(roomName);
       }
+      
+      // Close mobile menu when room is selected
+      closeMobileMenuOnRoomSwitch();
     }
   });
 
@@ -273,12 +277,13 @@ function handleLogin(e) {
 function setupSocketListeners() {
   // Connection events
   socket.on("connect", () => {
-    console.log("Connected to server");
+    console.log("Connected to server with ID:", socket.id);
     showNotification("Connected to secure chat server", "success");
     updateConnectionStatus(true);
 
     // Re-join room if we were in one
     if (currentUser) {
+      console.log("Re-joining room with user data:", currentUser);
       socket.emit("join", currentUser);
     }
   });
@@ -295,6 +300,7 @@ function setupSocketListeners() {
       "Failed to connect to server. Please refresh the page.",
       "error"
     );
+    updateConnectionStatus(false);
   });
 
   socket.on("reconnect", (attemptNumber) => {
@@ -306,6 +312,7 @@ function setupSocketListeners() {
   socket.on("reconnect_error", (error) => {
     console.error("Reconnection error:", error);
     showNotification("Failed to reconnect. Please refresh the page.", "error");
+    updateConnectionStatus(false);
   });
 
   // Key exchange events
@@ -337,6 +344,9 @@ function setupSocketListeners() {
     currentRoom.textContent = `#${newRoom}`;
     updateActiveRoom(newRoom);
 
+    // Close mobile menu when switching rooms
+    closeMobileMenuOnRoomSwitch();
+
     // Don't clear messages here - messageHistory event will handle it
 
     showNotification(`Switched to room #${newRoom}`, "success");
@@ -360,6 +370,8 @@ function setupSocketListeners() {
   // Encrypted message events
   socket.on("encryptedMessage", async (messageData) => {
     try {
+      console.log("Received encrypted message:", messageData);
+      
       // For demo purposes, we'll show the message directly
       // In production, decrypt the encryptedPacket here
       const message = {
@@ -371,6 +383,7 @@ function setupSocketListeners() {
         encrypted: true,
       };
 
+      console.log("Displaying message:", message);
       displayMessage(message);
       scrollToBottom();
     } catch (error) {
@@ -426,6 +439,10 @@ function handleSendMessage(e) {
     return;
   }
 
+  console.log("Sending message:", message);
+  console.log("Current user:", currentUser);
+  console.log("Socket connected:", socket.connected);
+
   // Show sending indicator
   const sendButton = document.getElementById("sendBtn");
   const originalHTML = sendButton.innerHTML;
@@ -433,15 +450,28 @@ function handleSendMessage(e) {
   sendButton.disabled = true;
 
   try {
-    // Send message to server (server will handle encryption)
-    socket.emit("chatMessage", { message: message }, (response) => {
-      // Message acknowledgment callback
+    // Send message to server with timeout
+    const messageData = { message: message };
+    console.log("Emitting chatMessage with data:", messageData);
+    
+    socket.timeout(5000).emit("chatMessage", messageData, (err, response) => {
+      console.log("Message response:", { err, response });
+      
+      if (err) {
+        console.error("Message timeout or error:", err);
+        showNotification("Message failed to send (timeout)", "error");
+        return;
+      }
+      
       if (response && response.error) {
+        console.error("Server error:", response.error);
         showNotification("Failed to send message: " + response.error, "error");
+      } else if (response && response.success) {
+        console.log("Message sent successfully");
       }
     });
 
-    // Clear input
+    // Clear input immediately (optimistic update)
     messageInput.value = "";
 
     // Stop typing indicator
@@ -879,35 +909,10 @@ function showNotification(message, type = "info") {
   }, 4000);
 }
 
-// Add connection status indicator to UI
+// Add connection status indicator to UI (removed - was always showing connected)
 function updateConnectionStatus(connected) {
-  let statusEl = document.getElementById("connectionStatus");
-  if (!statusEl) {
-    statusEl = document.createElement("div");
-    statusEl.id = "connectionStatus";
-    statusEl.style.cssText = `
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 1000;
-      transition: all 0.3s ease;
-    `;
-    document.body.appendChild(statusEl);
-  }
-
-  if (connected) {
-    statusEl.textContent = "🟢 Connected";
-    statusEl.style.backgroundColor = "#10b981";
-    statusEl.style.color = "white";
-  } else {
-    statusEl.textContent = "🔴 Disconnected";
-    statusEl.style.backgroundColor = "#ef4444";
-    statusEl.style.color = "white";
-  }
+  // Temporarily disabled - was causing confusion
+  console.log("Connection status:", connected ? "Connected" : "Disconnected");
 }
 
 // Test connection function
@@ -1016,3 +1021,69 @@ window.addEventListener("beforeunload", function () {
     socket.disconnect();
   }
 });
+
+// Mobile menu functionality
+let isMobileMenuOpen = false;
+
+function setupMobileMenu() {
+  const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  if (!mobileMenuBtn || !sidebar || !sidebarOverlay) return;
+
+  // Toggle mobile menu
+  mobileMenuBtn.addEventListener("click", toggleMobileMenu);
+  
+  // Close menu when overlay is clicked
+  sidebarOverlay.addEventListener("click", closeMobileMenu);
+  
+  // Close menu when escape key is pressed
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isMobileMenuOpen) {
+      closeMobileMenu();
+    }
+  });
+
+  // Close menu when window is resized to desktop
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 480 && isMobileMenuOpen) {
+      closeMobileMenu();
+    }
+  });
+}
+
+function toggleMobileMenu() {
+  if (isMobileMenuOpen) {
+    closeMobileMenu();
+  } else {
+    openMobileMenu();
+  }
+}
+
+function openMobileMenu() {
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  
+  sidebar.classList.add("open");
+  sidebarOverlay.classList.add("show");
+  document.body.style.overflow = "hidden";
+  isMobileMenuOpen = true;
+}
+
+function closeMobileMenu() {
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("show");
+  document.body.style.overflow = "";
+  isMobileMenuOpen = false;
+}
+
+// Close mobile menu when switching rooms on mobile
+function closeMobileMenuOnRoomSwitch() {
+  if (window.innerWidth <= 480 && isMobileMenuOpen) {
+    closeMobileMenu();
+  }
+}

@@ -76,6 +76,8 @@ io.on("connection", (socket) => {
 
   // Handle user joining
   socket.on("join", async (userData) => {
+    console.log(`[${socket.id}] User joining with data:`, userData);
+    
     try {
       const user = {
         id: socket.id,
@@ -84,20 +86,25 @@ io.on("connection", (socket) => {
         joinedAt: new Date(),
       };
 
+      console.log(`[${socket.id}] Created user object:`, user);
+
       // Generate RSA key pair for the user
       const userKeyPair = encryption.generateUserKeyPair();
       encryption.storeUserKeys(socket.id, userKeyPair);
 
       // Store user info
       activeUsers.set(socket.id, user);
+      console.log(`[${socket.id}] Stored user in activeUsers. Total users:`, activeUsers.size);
 
       // Join the room
       socket.join(user.room);
+      console.log(`[${socket.id}] Joined room: ${user.room}`);
 
       // Add user to room tracking
       if (!chatRooms.has(user.room)) {
         chatRooms.set(user.room, new Set());
         await db.createRoom(user.room, user.username);
+        console.log(`[${socket.id}] Created new room: ${user.room}`);
 
         // Broadcast new room to all connected users (except default room)
         if (user.room !== "general") {
@@ -108,6 +115,7 @@ io.on("connection", (socket) => {
         }
       }
       chatRooms.get(user.room).add(socket.id);
+      console.log(`[${socket.id}] Added to room tracking. Room ${user.room} has ${chatRooms.get(user.room).size} users`);
 
       // Store user session in database
       await db.storeUserSession(
@@ -129,6 +137,8 @@ io.on("connection", (socket) => {
         },
         roomKeyData: roomKeyData,
       });
+
+      console.log(`[${socket.id}] Sent key exchange data`);
 
       // Send welcome message to user (not stored in database)
       const welcomeMessage = {
@@ -158,23 +168,31 @@ io.on("connection", (socket) => {
       // Send message history to new user
       const messageHistory = await db.getMessageHistory(user.room, 50);
       socket.emit("messageHistory", messageHistory);
+      
+      console.log(`[${socket.id}] User join process completed successfully`);
     } catch (error) {
-      console.error("Error in user join:", error);
+      console.error(`[${socket.id}] Error in user join:`, error);
       socket.emit("error", { message: "Failed to join room" });
     }
   });
 
   // Handle chat messages with encryption
   socket.on("chatMessage", async (messageData, callback) => {
+    console.log(`[${socket.id}] Received chatMessage:`, messageData);
+    
     try {
       const user = activeUsers.get(socket.id);
       if (!user) {
+        console.log(`[${socket.id}] User not found in activeUsers`);
         if (callback)
           callback({ error: "User not found. Please refresh and try again." });
         return;
       }
 
+      console.log(`[${socket.id}] User found:`, user);
+
       if (!messageData.message || typeof messageData.message !== "string") {
+        console.log(`[${socket.id}] Invalid message format:`, messageData);
         if (callback) callback({ error: "Invalid message format" });
         return;
       }
@@ -188,12 +206,16 @@ io.on("connection", (socket) => {
         type: "user",
       };
 
+      console.log(`[${socket.id}] Created message:`, message);
+
       // Create encrypted message packet
       const encryptedPacket = encryption.createEncryptedMessage(
         { ...message, messageId: message.id },
         user.room,
         socket.id
       );
+
+      console.log(`[${socket.id}] Created encrypted packet`);
 
       // Store encrypted message in database
       await db.storeMessage(
@@ -204,16 +226,22 @@ io.on("connection", (socket) => {
         "user"
       );
 
+      console.log(`[${socket.id}] Stored message in database`);
+
       // Send encrypted message to all users in the room
-      io.to(user.room).emit("encryptedMessage", {
+      const messageToSend = {
         ...message,
         encryptedPacket: encryptedPacket,
-      });
+      };
+      
+      console.log(`[${socket.id}] Sending to room ${user.room}:`, messageToSend);
+      io.to(user.room).emit("encryptedMessage", messageToSend);
 
       // Send success acknowledgment
+      console.log(`[${socket.id}] Sending success callback`);
       if (callback) callback({ success: true });
     } catch (error) {
-      console.error("Error handling chat message:", error);
+      console.error(`[${socket.id}] Error handling chat message:`, error);
       if (callback)
         callback({ error: "Failed to send message. Please try again." });
       socket.emit("error", { message: "Failed to send message" });
