@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat App - Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Demo Banner -->
+    <div class="demo-banner">
+        <i class="fas fa-info-circle"></i>
+        <span>This is a demo version showing the UI/UX. Real-time features are simulated.</span>
+        <a href="https://github.com/yourusername/chat-app" target="_blank" class="github-link">
+            <i class="fab fa-github"></i> View Full Source Code
+        </a>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Secure Chat</h1>
+                </div>
+                <p>End-to-end encrypted messaging with maximum compression</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <label for="usernameInput">Username</label>
+                    <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="roomInput">Room (optional)</label>
+                    <input type="text" id="roomInput" placeholder="general" maxlength="20">
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Join Chat
+                </button>
+            </form>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-lock"></i>
+                    <span>End-to-end Encryption</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-compress"></i>
+                    <span>Brotli Compression</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure Rooms</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Application -->
+    <div class="chat-container hidden" id="chatApp">
+        <!-- Same structure as your original app -->
+        <!-- Copy the entire structure from your original index.html -->
+        <!-- But mark it as demo in comments -->
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

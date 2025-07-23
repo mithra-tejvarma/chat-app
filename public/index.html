@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebChat - Real-time Messaging</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+      <div class="login-container">
+        <div class="login-header">
+          <i class="fas fa-comments chat-icon"></i>
+          <h1>WebChat</h1>
+          <p>Connect with people around the world</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input
+              type="text"
+              id="usernameInput"
+              placeholder="Enter your username"
+              required
+              maxlength="20"
+            />
+          </div>
+          <div class="input-group">
+            <i class="fas fa-door-open"></i>
+            <input
+              type="text"
+              id="roomInput"
+              placeholder="Enter room name (optional)"
+              maxlength="20"
+            />
+          </div>
+          <button type="submit" class="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            Join Chat
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Chat Application -->
+    <div id="chatApp" class="chat-app hidden">
+      <!-- Header -->
+      <header class="chat-header">
+        <div class="header-left">
+          <i class="fas fa-comments"></i>
+          <span class="app-name">WebChat</span>
+        </div>
+        <div class="header-center">
+          <span id="currentRoom" class="current-room"></span>
+          <span id="onlineCount" class="online-count"></span>
+        </div>
+        <div class="header-right">
+          <button id="statsBtn" class="header-btn" title="Statistics">
+            <i class="fas fa-chart-bar"></i>
+          </button>
+          <button id="settingsBtn" class="header-btn" title="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+          <button id="logoutBtn" class="header-btn" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="chat-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <h3><i class="fas fa-hashtag"></i> Rooms</h3>
+            <div id="roomsList" class="rooms-list">
+              <div class="room-item active" data-room="general">
+                <i class="fas fa-hashtag"></i>
+                <span>general</span>
+                <small class="room-type">Public</small>
+              </div>
+            </div>
+            <button id="createRoomBtn" class="create-room-btn">
+              <i class="fas fa-plus"></i>
+              Create Room
+            </button>
+
+            <!-- Join Room Section -->
+            <div class="join-room-section">
+              <div class="join-room-form">
+                <input
+                  type="text"
+                  id="joinRoomInput"
+                  placeholder="Join room..."
+                  maxlength="20"
+                />
+                <button id="joinRoomBtn" class="join-room-btn">
+                  <i class="fas fa-sign-in-alt"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3><i class="fas fa-users"></i> Online Users</h3>
+            <div id="usersList" class="users-list"></div>
+          </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+          <!-- Messages Container -->
+          <div id="messagesContainer" class="messages-container">
+            <div id="messagesList" class="messages-list"></div>
+            <div id="typingIndicator" class="typing-indicator hidden">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <span id="typingText"></span>
+            </div>
+          </div>
+
+          <!-- Message Input -->
+          <div class="message-input-container">
+            <form id="messageForm" class="message-form">
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="messageInput"
+                  placeholder="Type your message..."
+                  maxlength="500"
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  id="emojiBtn"
+                  class="emoji-btn"
+                  title="Emojis"
+                >
+                  <i class="fas fa-smile"></i>
+                </button>
+              </div>
+              <button
+                type="submit"
+                id="sendBtn"
+                class="send-btn"
+                title="Send message"
+              >
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="modal hidden">
+      <div class="modal-content stats-modal">
+        <div class="modal-header">
+          <h3>📊 System Statistics</h3>
+          <button class="modal-close" id="closeStatsModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="stats-content">
+          <div class="stats-section">
+            <h4>🔐 Encryption & Security</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Active Encryption Keys</span>
+                <span class="stat-value" id="statActiveKeys">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Room Keys Managed</span>
+                <span class="stat-value" id="statRoomKeys">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Encryption Status</span>
+                <span class="stat-value encryption-status">🔒 Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-section">
+            <h4>💾 Database & Storage</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Total Messages</span>
+                <span class="stat-value" id="statTotalMessages">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Avg Compression</span>
+                <span class="stat-value" id="statCompressionRatio">-%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Best Compression</span>
+                <span class="stat-value" id="statBestCompression">-%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Space Saved</span>
+                <span class="stat-value" id="statSpaceSaved">-%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Storage Used</span>
+                <span class="stat-value" id="statStorageUsed">- KB</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Bytes Saved</span>
+                <span class="stat-value" id="statBytesSaved">- B</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-section">
+            <h4>🌐 Server Status</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Active Connections</span>
+                <span class="stat-value" id="statActiveConnections">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Rooms</span>
+                <span class="stat-value" id="statTotalRooms">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Server Uptime</span>
+                <span class="stat-value" id="statUptime">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-primary" id="refreshStats">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Creation Modal -->
+    <div id="createRoomModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create New Room</h3>
+          <button class="modal-close" id="closeCreateRoom">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form id="createRoomForm">
+          <div class="input-group">
+            <i class="fas fa-hashtag"></i>
+            <input
+              type="text"
+              id="newRoomName"
+              placeholder="Room name"
+              required
+              maxlength="20"
+            />
+          </div>
+          <div class="input-group">
+            <i class="fas fa-align-left"></i>
+            <input
+              type="text"
+              id="roomDescription"
+              placeholder="Room description (optional)"
+              maxlength="100"
+            />
+          </div>
+          <div class="privacy-options">
+            <label class="privacy-label">
+              <input type="radio" name="roomPrivacy" value="public" checked />
+              <i class="fas fa-globe"></i>
+              <span>Public Room</span>
+              <small>Anyone can join</small>
+            </label>
+            <label class="privacy-label">
+              <input type="radio" name="roomPrivacy" value="private" />
+              <i class="fas fa-lock"></i>
+              <span>Private Room</span>
+              <small>Password required to join</small>
+            </label>
+          </div>
+          <div id="passwordSection" class="input-group hidden">
+            <i class="fas fa-key"></i>
+            <input
+              type="password"
+              id="roomPassword"
+              placeholder="Room password"
+              maxlength="50"
+            />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancelCreateRoom">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Create Room</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Password Prompt Modal -->
+    <div id="passwordModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>🔐 Private Room</h3>
+          <button class="modal-close" id="closePasswordModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p>This room is private. Please enter the password to join:</p>
+        <form id="passwordForm">
+          <div class="input-group">
+            <i class="fas fa-key"></i>
+            <input
+              type="password"
+              id="joinPassword"
+              placeholder="Enter room password"
+              required
+            />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancelPassword">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Join Room</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div id="emojiPicker" class="emoji-picker hidden">
+      <div class="emoji-grid">
+        <span class="emoji" data-emoji="😀">😀</span>
+        <span class="emoji" data-emoji="😂">😂</span>
+        <span class="emoji" data-emoji="🥰">🥰</span>
+        <span class="emoji" data-emoji="😍">😍</span>
+        <span class="emoji" data-emoji="🤔">🤔</span>
+        <span class="emoji" data-emoji="😎">😎</span>
+        <span class="emoji" data-emoji="😢">😢</span>
+        <span class="emoji" data-emoji="😭">😭</span>
+        <span class="emoji" data-emoji="😤">😤</span>
+        <span class="emoji" data-emoji="🎉">🎉</span>
+        <span class="emoji" data-emoji="❤️">❤️</span>
+        <span class="emoji" data-emoji="👍">👍</span>
+        <span class="emoji" data-emoji="👎">👎</span>
+        <span class="emoji" data-emoji="👋">👋</span>
+        <span class="emoji" data-emoji="🔥">🔥</span>
+        <span class="emoji" data-emoji="💯">💯</span>
+      </div>
+    </div>
+
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
