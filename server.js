@@ -8,7 +8,37 @@ const EncryptionManager = require("./encryption");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+
+// Configure Socket.IO with CORS for production
+const io = socketIO(server, {
+  cors: {
+    origin: "*", // Allow all origins for now - you can restrict this later
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+  transports: ["websocket", "polling"],
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
+
+// Add CORS middleware for Express routes
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+// Parse JSON bodies
+app.use(express.json());
 
 // Initialize managers
 const db = new DatabaseManager();
@@ -135,15 +165,24 @@ io.on("connection", (socket) => {
   });
 
   // Handle chat messages with encryption
-  socket.on("chatMessage", async (messageData) => {
+  socket.on("chatMessage", async (messageData, callback) => {
     try {
       const user = activeUsers.get(socket.id);
-      if (!user) return;
+      if (!user) {
+        if (callback)
+          callback({ error: "User not found. Please refresh and try again." });
+        return;
+      }
+
+      if (!messageData.message || typeof messageData.message !== "string") {
+        if (callback) callback({ error: "Invalid message format" });
+        return;
+      }
 
       const message = {
         id: uuidv4(),
         username: user.username,
-        message: messageData.message,
+        message: messageData.message.trim(),
         timestamp: new Date(),
         room: user.room,
         type: "user",
@@ -170,8 +209,13 @@ io.on("connection", (socket) => {
         ...message,
         encryptedPacket: encryptedPacket,
       });
+
+      // Send success acknowledgment
+      if (callback) callback({ success: true });
     } catch (error) {
       console.error("Error handling chat message:", error);
+      if (callback)
+        callback({ error: "Failed to send message. Please try again." });
       socket.emit("error", { message: "Failed to send message" });
     }
   });
@@ -307,6 +351,11 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Handle ping for connection testing
+  socket.on("ping", (timestamp, callback) => {
+    if (callback) callback(timestamp);
+  });
+
   // Helper function to switch rooms
   async function switchRoom(socket, newRoom, password = null) {
     try {
@@ -422,6 +471,21 @@ app.get("/api/stats", async (req, res) => {
   }
 });
 
+// Health check endpoint for deployment monitoring
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
+// Basic route for testing
+app.get("/test", (req, res) => {
+  res.json({ message: "Server is running!", timestamp: new Date() });
+});
+
 // Cleanup function for periodic maintenance
 function performMaintenance() {
   try {
@@ -469,18 +533,31 @@ process.on("SIGTERM", () => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 
 // Initialize server with database
 initializeServer()
   .then(() => {
-    server.listen(PORT, () => {
-      console.log(`🚀 Secure Chat server running on port ${PORT}`);
-      console.log(`📊 Visit http://localhost:${PORT} to access the chat app`);
-      console.log(
-        `📈 Statistics available at http://localhost:${PORT}/api/stats`
-      );
+    server.listen(PORT, HOST, () => {
+      console.log(`🚀 Secure Chat server running on ${HOST}:${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
+
+      if (process.env.NODE_ENV === "production") {
+        console.log(`📊 Visit your deployment URL to access the chat app`);
+        console.log(`📈 Health check available at /health`);
+      } else {
+        console.log(`📊 Visit http://localhost:${PORT} to access the chat app`);
+        console.log(
+          `📈 Statistics available at http://localhost:${PORT}/api/stats`
+        );
+      }
+
       console.log(`🔐 End-to-end encryption enabled`);
       console.log(`💾 Database storage with compression enabled`);
+      console.log(`🌐 CORS enabled for all origins`);
+      console.log(
+        `⚡ Socket.IO configured with websocket and polling transports`
+      );
     });
   })
   .catch((error) => {

@@ -5,10 +5,15 @@ const zlib = require("zlib"); // Built-in Node.js module
 
 class DatabaseManager {
   constructor() {
-    this.dbPath = path.join(__dirname, "chat.db");
+    // Use different database path for production vs development
+    const dbName =
+      process.env.NODE_ENV === "production" ? "chat_prod.db" : "chat.db";
+    this.dbPath = process.env.DATABASE_URL || path.join(__dirname, dbName);
     this.db = null;
     this.encryptionKey =
       process.env.DB_ENCRYPTION_KEY || this.generateEncryptionKey();
+
+    console.log(`Database path: ${this.dbPath}`);
   }
 
   // Generate a consistent encryption key for database
@@ -35,8 +40,16 @@ class DatabaseManager {
           console.error("Error opening database:", err);
           reject(err);
         } else {
-          console.log("Connected to SQLite database");
-          this.createTables().then(resolve).catch(reject);
+          console.log(`Connected to SQLite database at: ${this.dbPath}`);
+          this.createTables()
+            .then(() => {
+              console.log("Database tables created/verified successfully");
+              resolve();
+            })
+            .catch((tableError) => {
+              console.error("Error creating tables:", tableError);
+              reject(tableError);
+            });
         }
       });
     });

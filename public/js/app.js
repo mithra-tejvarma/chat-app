@@ -237,7 +237,17 @@ function handleLogin(e) {
   }
 
   // Initialize socket connection
-  socket = io();
+  const socketUrl =
+    window.location.hostname === "localhost" ? "" : window.location.origin;
+
+  socket = io(socketUrl, {
+    transports: ["websocket", "polling"],
+    timeout: 20000,
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    maxReconnectionAttempts: 5,
+  });
   setupSocketListeners();
 
   // Set current user data
@@ -265,11 +275,37 @@ function setupSocketListeners() {
   socket.on("connect", () => {
     console.log("Connected to server");
     showNotification("Connected to secure chat server", "success");
+    updateConnectionStatus(true);
+
+    // Re-join room if we were in one
+    if (currentUser) {
+      socket.emit("join", currentUser);
+    }
   });
 
-  socket.on("disconnect", () => {
-    console.log("Disconnected from server");
+  socket.on("disconnect", (reason) => {
+    console.log("Disconnected from server:", reason);
     showNotification("Connection lost. Trying to reconnect...", "error");
+    updateConnectionStatus(false);
+  });
+
+  socket.on("connect_error", (error) => {
+    console.error("Connection error:", error);
+    showNotification(
+      "Failed to connect to server. Please refresh the page.",
+      "error"
+    );
+  });
+
+  socket.on("reconnect", (attemptNumber) => {
+    console.log("Reconnected after", attemptNumber, "attempts");
+    showNotification("Reconnected to server!", "success");
+    updateConnectionStatus(true);
+  });
+
+  socket.on("reconnect_error", (error) => {
+    console.error("Reconnection error:", error);
+    showNotification("Failed to reconnect. Please refresh the page.", "error");
   });
 
   // Key exchange events
@@ -380,7 +416,15 @@ function handleSendMessage(e) {
   e.preventDefault();
 
   const message = messageInput.value.trim();
-  if (!message || !socket) return;
+  if (!message) return;
+
+  if (!socket || !socket.connected) {
+    showNotification(
+      "Not connected to server. Please wait for reconnection.",
+      "error"
+    );
+    return;
+  }
 
   // Show sending indicator
   const sendButton = document.getElementById("sendBtn");
@@ -390,7 +434,12 @@ function handleSendMessage(e) {
 
   try {
     // Send message to server (server will handle encryption)
-    socket.emit("chatMessage", { message: message });
+    socket.emit("chatMessage", { message: message }, (response) => {
+      // Message acknowledgment callback
+      if (response && response.error) {
+        showNotification("Failed to send message: " + response.error, "error");
+      }
+    });
 
     // Clear input
     messageInput.value = "";
@@ -828,6 +877,46 @@ function showNotification(message, type = "info") {
       }
     }, 300);
   }, 4000);
+}
+
+// Add connection status indicator to UI
+function updateConnectionStatus(connected) {
+  let statusEl = document.getElementById("connectionStatus");
+  if (!statusEl) {
+    statusEl = document.createElement("div");
+    statusEl.id = "connectionStatus";
+    statusEl.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    `;
+    document.body.appendChild(statusEl);
+  }
+
+  if (connected) {
+    statusEl.textContent = "🟢 Connected";
+    statusEl.style.backgroundColor = "#10b981";
+    statusEl.style.color = "white";
+  } else {
+    statusEl.textContent = "🔴 Disconnected";
+    statusEl.style.backgroundColor = "#ef4444";
+    statusEl.style.color = "white";
+  }
+}
+
+// Test connection function
+function testConnection() {
+  if (socket && socket.connected) {
+    socket.emit("ping", Date.now(), (response) => {
+      console.log("Ping response time:", Date.now() - response, "ms");
+    });
+  }
 }
 
 // Handle page visibility for connection management
