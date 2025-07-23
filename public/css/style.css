@@ -804,7 +804,7 @@ body {
   .sidebar {
     width: 260px;
   }
-  
+
   .login-container {
     max-width: 380px;
     margin: 0 1rem;
@@ -1216,7 +1216,7 @@ body {
   .mobile-only {
     display: block;
   }
-  
+
   .desktop-only {
     display: none !important;
   }
@@ -1320,7 +1320,7 @@ body {
   .chat-app {
     height: -webkit-fill-available;
   }
-  
+
   .messages-container {
     height: calc(-webkit-fill-available - 60px - 80px);
   }

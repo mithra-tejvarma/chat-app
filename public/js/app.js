@@ -210,7 +210,7 @@ function setupEventListeners() {
       } else {
         switchRoom(roomName);
       }
-      
+
       // Close mobile menu when room is selected
       closeMobileMenuOnRoomSwitch();
     }
@@ -371,7 +371,7 @@ function setupSocketListeners() {
   socket.on("encryptedMessage", async (messageData) => {
     try {
       console.log("Received encrypted message:", messageData);
-      
+
       // For demo purposes, we'll show the message directly
       // In production, decrypt the encryptedPacket here
       const message = {
@@ -453,21 +453,25 @@ function handleSendMessage(e) {
     // Send message to server with timeout
     const messageData = { message: message };
     console.log("Emitting chatMessage with data:", messageData);
-    
+
     socket.timeout(5000).emit("chatMessage", messageData, (err, response) => {
       console.log("Message response:", { err, response });
-      
+
       if (err) {
         console.error("Message timeout or error:", err);
         showNotification("Message failed to send (timeout)", "error");
         return;
       }
-      
+
       if (response && response.error) {
         console.error("Server error:", response.error);
         showNotification("Failed to send message: " + response.error, "error");
       } else if (response && response.success) {
         console.log("Message sent successfully");
+        // Don't show success notification for every message
+      } else {
+        console.warn("Unexpected response:", response);
+        showNotification("Message may not have been sent properly", "warning");
       }
     });
 
@@ -924,6 +928,24 @@ function testConnection() {
   }
 }
 
+// Test function for simple messaging (for debugging)
+function sendSimpleMessage() {
+  if (!socket || !socket.connected) {
+    console.log("Socket not connected");
+    return;
+  }
+
+  const testMessage = "Test message: " + Date.now();
+  console.log("Sending simple test message:", testMessage);
+
+  socket.emit("simpleMessage", { message: testMessage }, (response) => {
+    console.log("Simple message response:", response);
+  });
+}
+
+// Add to window for testing in console
+window.sendSimpleMessage = sendSimpleMessage;
+
 // Handle page visibility for connection management
 document.addEventListener("visibilitychange", function () {
   if (document.hidden) {
@@ -1034,10 +1056,10 @@ function setupMobileMenu() {
 
   // Toggle mobile menu
   mobileMenuBtn.addEventListener("click", toggleMobileMenu);
-  
+
   // Close menu when overlay is clicked
   sidebarOverlay.addEventListener("click", closeMobileMenu);
-  
+
   // Close menu when escape key is pressed
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && isMobileMenuOpen) {
@@ -1064,7 +1086,7 @@ function toggleMobileMenu() {
 function openMobileMenu() {
   const sidebar = document.querySelector(".sidebar");
   const sidebarOverlay = document.getElementById("sidebarOverlay");
-  
+
   sidebar.classList.add("open");
   sidebarOverlay.classList.add("show");
   document.body.style.overflow = "hidden";
@@ -1074,7 +1096,7 @@ function openMobileMenu() {
 function closeMobileMenu() {
   const sidebar = document.querySelector(".sidebar");
   const sidebarOverlay = document.getElementById("sidebarOverlay");
-  
+
   sidebar.classList.remove("open");
   sidebarOverlay.classList.remove("show");
   document.body.style.overflow = "";

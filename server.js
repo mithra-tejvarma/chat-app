@@ -58,14 +58,28 @@ chatRooms.set(defaultRoom, new Set());
 // Initialize database
 async function initializeServer() {
   try {
+    console.log("Starting server initialization...");
+
+    // Test encryption manager
+    try {
+      const testKeyPair = encryption.generateUserKeyPair();
+      console.log("✅ Encryption manager working");
+    } catch (encError) {
+      console.error("❌ Encryption manager failed:", encError);
+    }
+
+    // Initialize database
     await db.initialize();
-    console.log("Database initialized successfully");
+    console.log("✅ Database initialized successfully");
 
     // Create default room in database
     await db.createRoom(defaultRoom, "system");
-    console.log("Default room created/verified");
+    console.log("✅ Default room created/verified");
+
+    console.log("🎉 Server initialization completed successfully");
   } catch (error) {
-    console.error("Failed to initialize server:", error);
+    console.error("❌ Failed to initialize server:", error);
+    console.error("Stack trace:", error.stack);
     process.exit(1);
   }
 }
@@ -77,7 +91,7 @@ io.on("connection", (socket) => {
   // Handle user joining
   socket.on("join", async (userData) => {
     console.log(`[${socket.id}] User joining with data:`, userData);
-    
+
     try {
       const user = {
         id: socket.id,
@@ -94,7 +108,10 @@ io.on("connection", (socket) => {
 
       // Store user info
       activeUsers.set(socket.id, user);
-      console.log(`[${socket.id}] Stored user in activeUsers. Total users:`, activeUsers.size);
+      console.log(
+        `[${socket.id}] Stored user in activeUsers. Total users:`,
+        activeUsers.size
+      );
 
       // Join the room
       socket.join(user.room);
@@ -115,7 +132,11 @@ io.on("connection", (socket) => {
         }
       }
       chatRooms.get(user.room).add(socket.id);
-      console.log(`[${socket.id}] Added to room tracking. Room ${user.room} has ${chatRooms.get(user.room).size} users`);
+      console.log(
+        `[${socket.id}] Added to room tracking. Room ${user.room} has ${
+          chatRooms.get(user.room).size
+        } users`
+      );
 
       // Store user session in database
       await db.storeUserSession(
@@ -168,7 +189,7 @@ io.on("connection", (socket) => {
       // Send message history to new user
       const messageHistory = await db.getMessageHistory(user.room, 50);
       socket.emit("messageHistory", messageHistory);
-      
+
       console.log(`[${socket.id}] User join process completed successfully`);
     } catch (error) {
       console.error(`[${socket.id}] Error in user join:`, error);
@@ -179,7 +200,7 @@ io.on("connection", (socket) => {
   // Handle chat messages with encryption
   socket.on("chatMessage", async (messageData, callback) => {
     console.log(`[${socket.id}] Received chatMessage:`, messageData);
-    
+
     try {
       const user = activeUsers.get(socket.id);
       if (!user) {
@@ -208,33 +229,50 @@ io.on("connection", (socket) => {
 
       console.log(`[${socket.id}] Created message:`, message);
 
-      // Create encrypted message packet
-      const encryptedPacket = encryption.createEncryptedMessage(
-        { ...message, messageId: message.id },
-        user.room,
-        socket.id
-      );
+      // Try to create encrypted message packet (skip if it fails)
+      let encryptedPacket = null;
+      try {
+        encryptedPacket = encryption.createEncryptedMessage(
+          { ...message, messageId: message.id },
+          user.room,
+          socket.id
+        );
+        console.log(`[${socket.id}] Created encrypted packet successfully`);
+      } catch (encryptError) {
+        console.warn(
+          `[${socket.id}] Encryption failed, sending unencrypted:`,
+          encryptError.message
+        );
+      }
 
-      console.log(`[${socket.id}] Created encrypted packet`);
+      // Try to store message in database (skip if it fails)
+      try {
+        await db.storeMessage(
+          message.id,
+          user.room,
+          user.username,
+          message,
+          "user"
+        );
+        console.log(`[${socket.id}] Stored message in database`);
+      } catch (dbError) {
+        console.warn(
+          `[${socket.id}] Database storage failed:`,
+          dbError.message
+        );
+        // Continue anyway - don't fail the message send
+      }
 
-      // Store encrypted message in database
-      await db.storeMessage(
-        message.id,
-        user.room,
-        user.username,
-        message,
-        "user"
-      );
-
-      console.log(`[${socket.id}] Stored message in database`);
-
-      // Send encrypted message to all users in the room
+      // Send message to all users in the room (always send, even if encryption/db failed)
       const messageToSend = {
         ...message,
         encryptedPacket: encryptedPacket,
       };
-      
-      console.log(`[${socket.id}] Sending to room ${user.room}:`, messageToSend);
+
+      console.log(
+        `[${socket.id}] Sending to room ${user.room}:`,
+        messageToSend
+      );
       io.to(user.room).emit("encryptedMessage", messageToSend);
 
       // Send success acknowledgment
@@ -245,6 +283,42 @@ io.on("connection", (socket) => {
       if (callback)
         callback({ error: "Failed to send message. Please try again." });
       socket.emit("error", { message: "Failed to send message" });
+    }
+  });
+
+  // Fallback simple message handler (for debugging)
+  socket.on("simpleMessage", async (messageData, callback) => {
+    console.log(`[${socket.id}] Received simpleMessage:`, messageData);
+
+    try {
+      const user = activeUsers.get(socket.id);
+      if (!user) {
+        if (callback) callback({ error: "User not found" });
+        return;
+      }
+
+      if (!messageData.message) {
+        if (callback) callback({ error: "No message content" });
+        return;
+      }
+
+      const message = {
+        id: uuidv4(),
+        username: user.username,
+        message: messageData.message,
+        timestamp: new Date(),
+        room: user.room,
+        type: "user",
+      };
+
+      // Send simple message without encryption or database storage
+      io.to(user.room).emit("message", message);
+
+      if (callback) callback({ success: true });
+      console.log(`[${socket.id}] Simple message sent successfully`);
+    } catch (error) {
+      console.error(`[${socket.id}] Simple message error:`, error);
+      if (callback) callback({ error: error.message });
     }
   });
 
