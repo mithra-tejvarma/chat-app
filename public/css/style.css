@@ -1435,7 +1435,6 @@ body {
   .emoji-picker .emoji:hover {
     background: #f1f5f9;
   }
-}
 
   /* Mobile header improvements */
   .header-left {
@@ -1553,21 +1552,20 @@ body {
   }
 }
 
-  .message-input-container {
-    padding: 0.75rem;
-  }
+.message-input-container {
+  padding: 0.75rem;
+}
 
-  .send-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
-  }
+.send-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
+}
 
-  #messageInput {
-    padding: 0.625rem;
-    font-size: 16px;
-  }
-
+#messageInput {
+  padding: 0.625rem;
+  font-size: 16px;
+}
 
 /* Landscape orientation adjustments for mobile */
 @media (max-width: 768px) and (orientation: landscape) {
